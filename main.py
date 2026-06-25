@@ -1,3 +1,8 @@
+import subprocess
+import sys
+from pathlib import Path
+
+
 class Player :
     def __init__(self):
         self.name= ""
@@ -19,16 +24,17 @@ class Player :
 class Menu :
     def display_main_menu(self):
         print("welcome to X-O game :")
-        print("1* start game ")
-        print("2* exit ")
-        choice = input("enter your choice 1 or 2 :")
-        while choice not in ["1","2"]:
+        print("1* start CLI game ")
+        print("2* start GUI game ")
+        print("3* exit ")
+        choice = input("enter your choice 1, 2 or 3 :")
+        while choice not in ["1","2", "3"]:
             print("invalid choice try again ")
-            choice = input("enter your choice 1 or 2 :")
+            choice = input("enter your choice 1, 2 or 3 :")
         return choice
-    def display_endgame_menu(self):
-        menu_text = """
-        game over !
+    def display_endgame_menu(self, result_message):
+        menu_text = f"""
+        {result_message}
         1* restsrt game 
         2* exit
         """
@@ -75,8 +81,16 @@ class Game :
         if choice == "1" :
             self.setup_players()
             self.play_game()
+        elif choice == "2":
+            self.start_gui_game()
         else :
             self.exit_game()
+    def start_gui_game(self):
+        gui_path = Path(__file__).with_name("gui_game.py")
+        if not gui_path.exists():
+            print("GUI file not found: gui_game.py")
+            return
+        subprocess.run([sys.executable, str(gui_path)], check=False)
 
     def setup_players(self) :
         for number , player  in  enumerate(self.players, start=1) :
@@ -98,8 +112,18 @@ class Game :
     def play_game(self) :
         while True :
             self.play_turn()
-            if self.check_win() or self.check_draw() :
-                choice = self.menu.display_endgame_menu()
+            if self.check_win():
+                winner = self.players[1 - self.current_player_index]
+                self.board.display_board()
+                choice = self.menu.display_endgame_menu(f"{winner.name} wins!")
+                if choice == "1" :
+                    self.restart_game()
+                else :
+                    self.exit_game()
+                    break
+            elif self.check_draw():
+                self.board.display_board()
+                choice = self.menu.display_endgame_menu("it's a draw!")
                 if choice == "1" :
                     self.restart_game()
                 else :
